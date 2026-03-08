@@ -1,0 +1,1 @@
+word2vec implementation in python using only NumPy.
