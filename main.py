@@ -34,7 +34,7 @@ class Vocabulary:
         self.corpus_size = len(self.corpus)
 
 def generate_training_pairs(vocab, window_size):
-    """Generates (target, context) pairs from corpus (stores indices instead of creating one-hot vectors to optimize speed)"""
+    """Generates (target, context) pairs from corpus with the window-size specified (stores indices instead of creating one-hot vectors to optimize speed)"""
     pairs = []
     for i in range(len(vocab.corpus)):
         word = vocab.corpus[i]
@@ -48,6 +48,25 @@ def generate_training_pairs(vocab, window_size):
                 pairs.append((target_idx, context_idx))       
     return np.array(pairs)
 
+def softmax(x):
+    e_x = np.exp(x - np.max(x)) # substracting the max to prevent overflow
+    return e_x / e_x.sum()
+
+def forward_prop(W1, W2, target_index):
+    """Computers the forward pass to predict context word probabilities given the index of a target word."""
+    h = W1[target_index].reshape(-1, 1)
+    u = np.dot(W2.T, h)
+    y_pred = softmax(u)
+    return y_pred, h, u
+
 vocab = Vocabulary(sentences)
 pairs = generate_training_pairs(vocab, 1)
-print(pairs)
+
+# change 2 for the embedding dimension
+W1 = np.random.randn(vocab.vocab_size, 2) * 0.01
+W2 = np.random.randn(2, vocab.vocab_size) * 0.01
+
+result = forward_prop(W1, W2, vocab.word2idx["pizza"])[0]
+
+for i in range(len(result)):
+    print(f"{vocab.idx2word[i]}: {result[i]}")
