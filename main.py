@@ -33,4 +33,21 @@ class Vocabulary:
         self.vocab_size = len(self.word2idx)
         self.corpus_size = len(self.corpus)
 
+def generate_training_pairs(vocab, window_size):
+    """Generates (target, context) pairs from corpus (stores indices instead of creating one-hot vectors to optimize speed)"""
+    pairs = []
+    for i in range(len(vocab.corpus)):
+        word = vocab.corpus[i]
+        target_idx = vocab.word2idx[word]
+        start = max(0, i - window_size)
+        end = min(len(vocab.corpus), i + window_size + 1)
+        for j in range(start, end):
+            if i != j: 
+                context_word = vocab.corpus[j]
+                context_idx = vocab.word2idx[context_word]
+                pairs.append((target_idx, context_idx))       
+    return np.array(pairs)
+
 vocab = Vocabulary(sentences)
+pairs = generate_training_pairs(vocab, 1)
+print(pairs)
