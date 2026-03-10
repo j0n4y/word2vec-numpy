@@ -81,10 +81,30 @@ class Word2vec:
                 self._back_prop(target_idx, context_idx)
                 loss += -self.u[context_idx][0] + np.log(np.sum(np.exp(self.u)))
             print(f"epoch {x+1}: loss = {loss}")
+    
+    def predict(self, word, nPredictions):
+        if word in self.vocab.corpus:
+            idx = self.vocab.word2idx[word]
+            self._forward_prop(idx)
+            top_words = []
+            prev_max = 10
+            for x in range(nPredictions):
+                max = 0
+                max_idx = 0
+                for i in range(self.vocab.vocab_size):
+                    if self.y_pred[i][0] > max and self.y_pred[i][0] < prev_max:
+                        max = self.y_pred[i][0]
+                        max_idx = i
+                top_words.append(f"{self.vocab.idx2word[max_idx]}: {self.y_pred[max_idx][0]}")
+                prev_max = max
+            print(top_words)   
+        else:
+            print(f'word "{word}" is not in dictionary')
 
 vocab = Vocabulary(sentences)
-word2vec = Word2vec(vocab, 3, 5, 0.1)
+word2vec = Word2vec(vocab, 1, 2, 0.1)
 word2vec.train(1000)
+word2vec.predict("pizza", 5)
 
 
 
