@@ -177,16 +177,16 @@ class Word2vec:
                 self._back_prop(target_idx, context_idx)
                 loss += -self.u[context_idx][0] + np.log(np.sum(np.exp(self.u)))
             print(f"epoch {x+1}: loss = {loss}")
-            self.alpha *= 0.99 
+            self.alpha *= 0.9 
     
     def predict(self, word, nPredictions):
         if word in self.vocab.corpus:
             idx = self.vocab.word2idx[word]
             self._forward_prop(idx)
             top_words = []
-            prev_max = 10
+            prev_max = 2
             for x in range(nPredictions):
-                max = 0
+                max = -1
                 max_idx = 0
                 for i in range(self.vocab.vocab_size):
                     if self.y_pred[i][0] > max and self.y_pred[i][0] < prev_max:
@@ -198,12 +198,33 @@ class Word2vec:
         else:
             print(f'word "{word}" is not in dictionary')
 
+    def most_similar(self, word, nPredictions):
+        if word in self.vocab.word2idx:
+            idx = self.vocab.word2idx[word]
+            vec = self.W1[idx]
+            top_words = []
+            prev_max = 2
+            for x in range(nPredictions):
+                max_sim = -2
+                max_idx = 0
+                for i in range(self.vocab.vocab_size):
+                    if i != idx:
+                        cos_sim = np.dot(vec, self.W1[i]) / (np.linalg.norm(vec) * np.linalg.norm(self.W1[i]))
+                        if cos_sim > max_sim and cos_sim < prev_max:
+                            max_sim = cos_sim
+                            max_idx = i
+                top_words.append(f"{self.vocab.idx2word[max_idx]}: {max_sim}")
+                prev_max = max_sim
+            print(f"predictions for {word}: {top_words}")
+        else:
+            print(f'word "{word}" is not in dictionary')
+
 vocab = Vocabulary(sentences)
-word2vec = Word2vec(vocab, 1, 10, 0.1)
-word2vec.train(100)
-word2vec.predict("pizza", 5)
-word2vec.predict("pasta", 5)
-word2vec.predict("cheese", 5)
-word2vec.predict("tomato", 5)
-word2vec.predict("cooking", 5)
-word2vec.predict("italian", 5)
+word2vec = Word2vec(vocab, 5, 10, 0.5)
+word2vec.train(500)
+word2vec.most_similar("pizza", 5)
+word2vec.most_similar("pasta", 5)
+word2vec.most_similar("cheese", 5)
+word2vec.most_similar("tomato", 5)
+word2vec.most_similar("cooking", 5)
+word2vec.most_similar("italian", 5)
