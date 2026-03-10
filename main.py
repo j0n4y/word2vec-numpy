@@ -52,12 +52,20 @@ def softmax(x):
     e_x = np.exp(x - np.max(x)) # substracting the max to prevent overflow
     return e_x / e_x.sum()
 
-def forward_prop(W1, W2, target_index):
-    """Computers the forward pass to predict context word probabilities given the index of a target word."""
-    h = W1[target_index].reshape(-1, 1)
+def forward_prop(W1, W2, target_idx):
+    """Computers the forward propagation to predict context word probabilities given the index of a target word."""
+    h = W1[target_idx].reshape(-1, 1)
     u = np.dot(W2.T, h)
     y_pred = softmax(u)
     return y_pred, h, u
+
+def back_prop(W1, W2, target_idx, context_idx, y_pred, h, u, alpha):
+    y_pred[context_idx] -= 1
+    dLdW2 = np.dot(h, y_pred.T)
+    dLdW1 = np.dot(W2, y_pred).T
+    W2 = W2 - alpha * dLdW2
+    W1[target_idx] = W1[target_idx] - alpha * dLdW1
+    return W1, W2
 
 vocab = Vocabulary(sentences)
 pairs = generate_training_pairs(vocab, 1)
@@ -66,7 +74,7 @@ pairs = generate_training_pairs(vocab, 1)
 W1 = np.random.randn(vocab.vocab_size, 2) * 0.01
 W2 = np.random.randn(2, vocab.vocab_size) * 0.01
 
-result = forward_prop(W1, W2, vocab.word2idx["pizza"])[0]
+y_pred, h, u = forward_prop(W1, W2, pairs[0][0])
+result = back_prop(W1, W2, pairs[0][0], pairs[0][1], y_pred, h, u, 0.1)
 
-for i in range(len(result)):
-    print(f"{vocab.idx2word[i]}: {result[i]}")
+print(result)
