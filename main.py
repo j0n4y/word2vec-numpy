@@ -177,6 +177,7 @@ class Word2vec:
                 self._back_prop(target_idx, context_idx)
                 loss += -self.u[context_idx][0] + np.log(np.sum(np.exp(self.u)))
             print(f"epoch {x+1}: loss = {loss}")
+            self.alpha *= 0.99 
     
     def predict(self, word, nPredictions):
         if word in self.vocab.corpus:
