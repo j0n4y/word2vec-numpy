@@ -189,9 +189,10 @@ class Word2vec:
                 max = -1
                 max_idx = 0
                 for i in range(self.vocab.vocab_size):
-                    if self.y_pred[i][0] > max and self.y_pred[i][0] < prev_max:
-                        max = self.y_pred[i][0]
-                        max_idx = i
+                    if i != idx:
+                        if self.y_pred[i][0] > max and self.y_pred[i][0] < prev_max:
+                            max = self.y_pred[i][0]
+                            max_idx = i
                 top_words.append(f"{self.vocab.idx2word[max_idx]}: {self.y_pred[max_idx][0]}")
                 prev_max = max
             print(f"predictions for {word}: {top_words}")   
@@ -221,10 +222,4 @@ class Word2vec:
 
 vocab = Vocabulary(sentences)
 word2vec = Word2vec(vocab, 5, 10, 0.5)
-word2vec.train(500)
-word2vec.most_similar("pizza", 5)
-word2vec.most_similar("pasta", 5)
-word2vec.most_similar("cheese", 5)
-word2vec.most_similar("tomato", 5)
-word2vec.most_similar("cooking", 5)
-word2vec.most_similar("italian", 5)
+word2vec.train(400)
