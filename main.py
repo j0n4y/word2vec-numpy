@@ -67,6 +67,15 @@ def back_prop(W1, W2, target_idx, context_idx, y_pred, h, u, alpha):
     W1[target_idx] = W1[target_idx] - alpha * dLdW1
     return W1, W2
 
+def train(epochs, W1, W2, pairs):
+    for x in range(0, epochs):
+        loss = 0
+        for target_idx, context_idx in pairs:
+            y_pred, h, u = forward_prop(W1, W2, target_idx)
+            W1, W2 = back_prop(W1, W2, target_idx, context_idx, y_pred, h, u, 0.1)
+            loss += -u[context_idx][0] + np.log(np.sum(np.exp(u)))
+        print(f"epoch {x+1}: loss = {loss}")
+
 vocab = Vocabulary(sentences)
 pairs = generate_training_pairs(vocab, 1)
 
@@ -74,7 +83,6 @@ pairs = generate_training_pairs(vocab, 1)
 W1 = np.random.randn(vocab.vocab_size, 2) * 0.01
 W2 = np.random.randn(2, vocab.vocab_size) * 0.01
 
-y_pred, h, u = forward_prop(W1, W2, pairs[0][0])
-result = back_prop(W1, W2, pairs[0][0], pairs[0][1], y_pred, h, u, 0.1)
+train(100000, W1, W2, pairs)
 
-print(result)
+
