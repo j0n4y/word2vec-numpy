@@ -96,23 +96,31 @@ class Word2vec:
         self.W1[target_idx] -= self.alpha * dLdh
 
     def train(self, epochs):
-        for x in range(0, epochs):
+        for x in range(epochs):
             loss = 0
+            # pre-sample all negatives of this epoch at once
+            neg_samples = np.random.choice(
+                self.vocab.vocab_size,
+                size=len(self.pairs) * self.num_negatives * 2,  # double because we have 2 invalid words per pair (target_idx and context_idx), enough in most cases
+                p=self.vocab.noise_distribution
+            )
+            neg_list_idx = 0
             for i in range(len(self.pairs)):
                 target_idx, context_idx = self.pairs[i]
                 negatives = []
                 while len(negatives) < self.num_negatives:
-                    neg = np.random.choice(self.vocab.vocab_size, p=self.vocab.noise_distribution)
-                    if neg != target_idx and neg != context_idx:
-                        negatives.append(neg)
+                    neg_idx = neg_samples[neg_list_idx % len(neg_samples)]
+                    neg_list_idx += 1
+                    if neg_idx != target_idx and neg_idx != context_idx:
+                        negatives.append(neg_idx)
                 self._forward_prop(target_idx, context_idx, negatives)
                 self._back_prop(target_idx, context_idx, negatives)
                 loss += -np.log(self.score_pos + 1e-9)
                 for k in range(len(negatives)):
                     loss += -np.log(1 - self.score_negs[k] + 1e-9)
-                print(f"epoch {x+1}: {100 * i // len(self.pairs)}%", end="\r")    
+                print(f"epoch {x+1}: {100 * i // len(self.pairs)}%", end="\r")
             print(f"epoch {x+1}: loss = {loss}")
-            self.alpha *= 0.9 
+            self.alpha *= 0.9
 
     def most_similar(self, word, nPredictions):
         if word in self.vocab.word2idx:
