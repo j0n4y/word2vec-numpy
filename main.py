@@ -28,6 +28,7 @@ class Vocabulary:
 
     def _build_vocab(self, sentences):
         count = 0
+        freq = {} # count frequency of each word for computing noise distribution 
         for sentence in sentences:
             for word in sentence:
                 self.corpus.append(word)
@@ -35,8 +36,22 @@ class Vocabulary:
                     self.word2idx[word] = count
                     self.idx2word[count] = word
                     count += 1
+                if freq.get(word) is None:
+                    freq[word] = 0
+                freq[word] += 1
+
         self.vocab_size = len(self.word2idx)
         self.corpus_size = len(self.corpus)
+
+        # compute noise distribution
+        counts = [] 
+        for i in range(self.vocab_size):
+            counts.append(freq[self.idx2word[i]] ** 0.75)
+        total = sum(counts)
+        self.noise_distribution = []
+        for i in range(len(counts)):
+            self.noise_distribution.append(counts[i] / total)
+
 
 class Word2vec:
     def __init__(self, vocab, window_size, embedding_dimension, num_negatives, init_alpha):
@@ -62,7 +77,7 @@ class Word2vec:
 
                     negatives = []
                     while len(negatives) < self.num_negatives:
-                        neg = np.random.randint(0, self.vocab.vocab_size) # TODO: Change this function for the one used in the original paper
+                        neg = np.random.choice(self.vocab.vocab_size, p=self.vocab.noise_distribution)
                         if neg != target_idx and neg != context_idx:
                             negatives.append(neg)
 
@@ -127,7 +142,7 @@ class Word2vec:
 
 vocab = Vocabulary(preprocess(sentences))
 word2vec = Word2vec(vocab, window_size=5, embedding_dimension=100, num_negatives=5, init_alpha=0.025)
-word2vec.train(3)
+word2vec.train(5)
 
 while True:
     word = input("Enter a word: ")
