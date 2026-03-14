@@ -4,7 +4,7 @@ import nltk
 from nltk.corpus import brown
 
 # nltk.download('brown') # Execute this line only if brown corpus is not already downloaded
-sentences = brown.sents(categories='news')
+sentences = brown.sents()
 
 def preprocess(sentences):
     processed = []
@@ -28,7 +28,7 @@ class Vocabulary:
 
     def _build_vocab(self, sentences):
         count = 0
-        freq = {} # count frequency of each word for computing noise distribution 
+        freq = {} # count frequency of each word for computing noise distribution and subsampling of frequent words
         for sentence in sentences:
             for word in sentence:
                 self.corpus.append(word)
@@ -41,6 +41,17 @@ class Vocabulary:
                 freq[word] += 1
 
         self.vocab_size = len(self.word2idx)
+        self.corpus_size = len(self.corpus)
+
+        # subsampling of frequent words
+        t = 1e-5
+        filtered_corpus = []
+        for word in self.corpus:
+            f = freq[word] / self.corpus_size 
+            prob_discard = 1 - (t / f) ** 0.5
+            if prob_discard < 0 or np.random.random() > prob_discard:
+                filtered_corpus.append(word)
+        self.corpus = filtered_corpus
         self.corpus_size = len(self.corpus)
 
         # compute noise distribution
