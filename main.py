@@ -4,7 +4,7 @@ import nltk
 from nltk.corpus import brown
 
 # nltk.download('brown') # Execute this line only if brown corpus is not already downloaded
-sentences = brown.sents()
+sentences = brown.sents(categories='news')
 
 def preprocess(sentences):
     processed = []
@@ -107,6 +107,9 @@ class Word2vec:
         self.W1[target_idx] -= self.alpha * dLdh
 
     def train(self, epochs):
+        init_alpha = self.alpha
+        total_steps = epochs * len(self.pairs)
+        step = 0
         for x in range(epochs):
             loss = 0
             # pre-sample all negatives of this epoch at once
@@ -129,9 +132,12 @@ class Word2vec:
                 loss += -np.log(self.score_pos + 1e-9)
                 for k in range(len(negatives)):
                     loss += -np.log(1 - self.score_negs[k] + 1e-9)
+
+                step += 1
+                self.alpha = init_alpha * (1 - step / total_steps)
+
                 print(f"epoch {x+1}: {100 * i // len(self.pairs)}%", end="\r")
             print(f"epoch {x+1}: loss = {loss}")
-            self.alpha *= 0.9
 
     def most_similar(self, word, nPredictions):
         if word in self.vocab.word2idx:
@@ -155,8 +161,8 @@ class Word2vec:
             print(f'word "{word}" is not in dictionary')
 
 vocab = Vocabulary(preprocess(sentences))
-word2vec = Word2vec(vocab, window_size=5, embedding_dimension=100, num_negatives=5, init_alpha=0.025)
-word2vec.train(5)
+word2vec = Word2vec(vocab, window_size=10, embedding_dimension=100, num_negatives=5, init_alpha=0.025)
+word2vec.train(10)
 
 while True:
     word = input("Enter a word: ")
