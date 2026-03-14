@@ -10,10 +10,11 @@ class Word2vec:
         self.alpha = init_alpha
 
     def _generate_training_pairs(self, window_size):
+        '''Compute the pairs of each word and its context words with a dynamic window size'''
         pairs = []
         for i in range(len(self.vocab.corpus)):
             target_idx = self.vocab.word2idx[self.vocab.corpus[i]]
-            random_window_size = np.random.randint(1, window_size + 1)
+            random_window_size = np.random.randint(1, window_size + 1) # dynamic window size
             start = max(0, i - random_window_size)
             end = min(len(self.vocab.corpus), i + random_window_size + 1)
             for j in range(start, end):
@@ -26,21 +27,29 @@ class Word2vec:
         return 1 / (1 + np.exp(-x))
 
     def _forward_prop(self, target_idx, context_idx, negatives):
-        self.h = self.W1[target_idx]
+        '''Computes forward propagation for a pair and its negatives'''
+        self.h = self.W1[target_idx] # uses index instead of dot product for performance
         self.score_pos = self._sigmoid(np.dot(self.W2[context_idx], self.h))
         self.score_negs = []
         for neg in negatives:
             self.score_negs.append(self._sigmoid(np.dot(self.W2[neg], self.h)))
 
     def _back_prop(self, target_idx, context_idx, negatives):
+        '''Computes back propagation'''
+
+        # Calculate error for context word
         dLdh = (self.score_pos - 1) * self.W2[context_idx]
+
+        # Acumulate error from negatives
         for k in range(len(negatives)):
             dLdh += self.score_negs[k] * self.W2[negatives[k]]
 
+        # Update W2 weights
         self.W2[context_idx] -= self.alpha * (self.score_pos - 1) * self.h
         for k in range(len(negatives)):
             self.W2[negatives[k]] -= self.alpha * self.score_negs[k] * self.h
         
+        # Update W1 weights
         self.W1[target_idx] -= self.alpha * dLdh
 
     def train(self, epochs):
@@ -72,6 +81,7 @@ class Word2vec:
                 for k in range(len(negatives)):
                     loss += -np.log(1 - self.score_negs[k] + 1e-9)
 
+                # linear alpha decay
                 step += 1
                 self.alpha = init_alpha * (1 - step / total_steps)
 
@@ -79,6 +89,7 @@ class Word2vec:
             print(f"epoch {x+1}: loss = {loss}")
 
     def most_similar(self, word, nPredictions):
+        '''Finds words with the highest cosine similarity'''
         if word in self.vocab.word2idx:
             idx = self.vocab.word2idx[word]
             vec = self.W1[idx]
