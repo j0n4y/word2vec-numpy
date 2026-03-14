@@ -16,6 +16,7 @@ def preprocess(sentences):
 
 def main():
     print("Loading and preprocessing Brown Corpus")
+    nltk.download('brown') # Not necessary after first time. Just in case
     sentences = brown.sents()
     processed_sentences = preprocess(sentences)
 
