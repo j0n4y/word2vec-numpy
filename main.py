@@ -77,8 +77,9 @@ class Word2vec:
         pairs = []
         for i in range(len(self.vocab.corpus)):
             target_idx = self.vocab.word2idx[self.vocab.corpus[i]]
-            start = max(0, i - window_size)
-            end = min(len(self.vocab.corpus), i + window_size + 1)
+            random_window_size = np.random.randint(1, window_size + 1)
+            start = max(0, i - random_window_size)
+            end = min(len(self.vocab.corpus), i + random_window_size + 1)
             for j in range(start, end):
                 if i != j:
                     context_idx = self.vocab.word2idx[self.vocab.corpus[j]]
@@ -161,7 +162,7 @@ class Word2vec:
             print(f'word "{word}" is not in dictionary')
 
 vocab = Vocabulary(preprocess(sentences))
-word2vec = Word2vec(vocab, window_size=10, embedding_dimension=100, num_negatives=5, init_alpha=0.025)
+word2vec = Word2vec(vocab, window_size=5, embedding_dimension=50, num_negatives=5, init_alpha=0.025)
 word2vec.train(10)
 
 while True:
