@@ -81,7 +81,7 @@ class Word2vec:
         self.num_negatives = num_negatives
         self.pairs = self._generate_training_pairs(window_size)
         self.W1 = np.random.randn(vocab.vocab_size, embedding_dimension) * 0.01
-        self.W2 = np.random.randn(embedding_dimension, vocab.vocab_size) * 0.01
+        self.W2 = np.random.randn(vocab.vocab_size, embedding_dimension) * 0.01
         self.alpha = init_alpha
 
     def _generate_training_pairs(self, window_size):
@@ -102,19 +102,19 @@ class Word2vec:
 
     def _forward_prop(self, target_idx, context_idx, negatives):
         self.h = self.W1[target_idx].flatten()
-        self.score_pos = self._sigmoid(np.dot(self.W2.T[context_idx], self.h))
+        self.score_pos = self._sigmoid(np.dot(self.W2[context_idx], self.h))
         self.score_negs = []
         for neg in negatives:
-            self.score_negs.append(self._sigmoid(np.dot(self.W2.T[neg], self.h)))
+            self.score_negs.append(self._sigmoid(np.dot(self.W2[neg], self.h)))
 
     def _back_prop(self, target_idx, context_idx, negatives):
-        dLdh = (self.score_pos - 1) * self.W2.T[context_idx]
+        dLdh = (self.score_pos - 1) * self.W2[context_idx]
         for k in range(len(negatives)):
-            dLdh += self.score_negs[k] * self.W2.T[negatives[k]]
+            dLdh += self.score_negs[k] * self.W2[negatives[k]]
 
-        self.W2.T[context_idx] -= self.alpha * (self.score_pos - 1) * self.h
+        self.W2[context_idx] -= self.alpha * (self.score_pos - 1) * self.h
         for k in range(len(negatives)):
-            self.W2.T[negatives[k]] -= self.alpha * self.score_negs[k] * self.h
+            self.W2[negatives[k]] -= self.alpha * self.score_negs[k] * self.h
         
         self.W1[target_idx] -= self.alpha * dLdh
 
