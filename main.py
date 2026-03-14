@@ -174,9 +174,20 @@ class Word2vec:
         else:
             print(f'word "{word}" is not in dictionary')
 
+    def save(self, path):
+        np.savez(path, W1=self.W1, W2=self.W2)
+        print(f"Weights saved to {path}.npz")
+
+    def load(self, path):
+        data = np.load(path)
+        self.W1 = data["W1"]
+        self.W2 = data["W2"]
+        print(f"Weights loaded from {path}")
+    
 vocab = Vocabulary(preprocess(sentences), min_count=5)
-word2vec = Word2vec(vocab, window_size=5, embedding_dimension=50, num_negatives=5, init_alpha=0.025)
-word2vec.train(10)
+word2vec = Word2vec(vocab, window_size=5, embedding_dimension=50, num_negatives=15, init_alpha=0.025)
+word2vec.train(5)
+word2vec.save("weights")
 
 while True:
     word = input("Enter a word: ")
