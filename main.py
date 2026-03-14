@@ -3,7 +3,7 @@ import numpy as np
 import nltk
 from nltk.corpus import brown
 
-nltk.download('brown') # Execute this line only if brown corpus is not already downloaded
+# nltk.download('brown') # Execute this line only if brown corpus is not already downloaded
 sentences = brown.sents(categories='news')
 
 def preprocess(sentences):
@@ -39,8 +39,9 @@ class Vocabulary:
         self.corpus_size = len(self.corpus)
 
 class Word2vec:
-    def __init__(self, vocab, window_size, embedding_dimension, init_alpha):
+    def __init__(self, vocab, window_size, embedding_dimension, num_negatives, init_alpha):
         self.vocab = vocab
+        self.num_negatives = num_negatives
         self.pairs = self._generate_training_pairs(window_size)
         self.W1 = np.random.randn(vocab.vocab_size, embedding_dimension) * 0.01
         self.W2 = np.random.randn(embedding_dimension, vocab.vocab_size) * 0.01
@@ -58,33 +59,48 @@ class Word2vec:
                 if i != j: 
                     context_word = self.vocab.corpus[j]
                     context_idx = self.vocab.word2idx[context_word]
-                    pairs.append((target_idx, context_idx))       
-        return np.array(pairs)
 
-    def _softmax(self, x):
-        e_x = np.exp(x - np.max(x)) # substracting the max to prevent overflow
-        return e_x / e_x.sum()
+                    negatives = []
+                    while len(negatives) < self.num_negatives:
+                        neg = np.random.randint(0, self.vocab.vocab_size) # TODO: Change this function for the one used in the original paper
+                        if neg != target_idx and neg != context_idx:
+                            negatives.append(neg)
 
-    def _forward_prop(self, target_idx):
-        """Computers the forward propagation to predict context word probabilities given the index of a target word."""
-        self.h = self.W1[target_idx].reshape(-1, 1)
-        self.u = np.dot(self.W2.T, self.h)
-        self.y_pred = self._softmax(self.u)
+                    pairs.append((target_idx, context_idx, negatives))       
+        return pairs
 
-    def _back_prop(self, target_idx, context_idx):
-        self.y_pred[context_idx] -= 1
-        dLdW2 = np.dot(self.h, self.y_pred.T)
-        dLdW1 = np.dot(self.W2, self.y_pred).T
-        self.W2 = self.W2 - self.alpha * dLdW2
-        self.W1[target_idx] = self.W1[target_idx] - self.alpha * dLdW1
+    def _sigmoid(self, x):
+        return 1 / (1 + np.exp(-x))
+
+    def _forward_prop(self, target_idx, context_idx, negatives):
+        self.h = self.W1[target_idx].flatten()
+        self.score_pos = self._sigmoid(np.dot(self.W2.T[context_idx], self.h))
+        self.score_negs = []
+        for neg in negatives:
+            self.score_negs.append(self._sigmoid(np.dot(self.W2.T[neg], self.h)))
+
+    def _back_prop(self, target_idx, context_idx, negatives):
+        dLdh = (self.score_pos - 1) * self.W2.T[context_idx]
+        for k in range(len(negatives)):
+            dLdh += self.score_negs[k] * self.W2.T[negatives[k]]
+
+        self.W2.T[context_idx] -= self.alpha * (self.score_pos - 1) * self.h
+        for k in range(len(negatives)):
+            self.W2.T[negatives[k]] -= self.alpha * self.score_negs[k] * self.h
+        
+        self.W1[target_idx] -= self.alpha * dLdh
 
     def train(self, epochs):
         for x in range(0, epochs):
             loss = 0
-            for target_idx, context_idx in self.pairs:
-                self._forward_prop(target_idx)
-                self._back_prop(target_idx, context_idx)
-                loss += -self.u[context_idx][0] + np.log(np.sum(np.exp(self.u)))
+            for i in range(len(self.pairs)):
+                target_idx, context_idx, negatives = self.pairs[i]
+                self._forward_prop(target_idx, context_idx, negatives)
+                self._back_prop(target_idx, context_idx, negatives)
+                loss += -np.log(self.score_pos + 1e-9)
+                for k in range(len(negatives)):
+                    loss += -np.log(1 - self.score_negs[k] + 1e-9)
+                print(f"epoch {x+1}: {100 * i // len(self.pairs)}%", end="\r")    
             print(f"epoch {x+1}: loss = {loss}")
             self.alpha *= 0.9 
 
@@ -110,5 +126,9 @@ class Word2vec:
             print(f'word "{word}" is not in dictionary')
 
 vocab = Vocabulary(preprocess(sentences))
-word2vec = Word2vec(vocab, 1, 1, 0.5)
-word2vec.train(1)
+word2vec = Word2vec(vocab, window_size=5, embedding_dimension=100, num_negatives=5, init_alpha=0.025)
+word2vec.train(3)
+
+while True:
+    word = input("Enter a word: ")
+    word2vec.most_similar(word, 5)
