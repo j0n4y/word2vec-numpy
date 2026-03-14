@@ -123,6 +123,8 @@ class Word2vec:
         total_steps = epochs * len(self.pairs)
         step = 0
         for x in range(epochs):
+            np.random.shuffle(self.pairs)
+
             loss = 0
             # pre-sample all negatives of this epoch at once
             neg_samples = np.random.choice(
