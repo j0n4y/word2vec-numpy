@@ -80,8 +80,8 @@ class Word2vec:
         self.vocab = vocab
         self.num_negatives = num_negatives
         self.pairs = self._generate_training_pairs(window_size)
-        self.W1 = np.random.randn(vocab.vocab_size, embedding_dimension) * 0.01
-        self.W2 = np.random.randn(vocab.vocab_size, embedding_dimension) * 0.01
+        self.W1 = np.random.randn(vocab.vocab_size, embedding_dimension).astype(np.float32) * 0.01
+        self.W2 = np.random.randn(vocab.vocab_size, embedding_dimension).astype(np.float32) * 0.01
         self.alpha = init_alpha
 
     def _generate_training_pairs(self, window_size):
