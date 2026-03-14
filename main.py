@@ -4,7 +4,7 @@ import nltk
 from nltk.corpus import brown
 
 # nltk.download('brown') # Execute this line only if brown corpus is not already downloaded
-sentences = brown.sents(categories='news')
+sentences = brown.sents()
 
 def preprocess(sentences):
     processed = []
@@ -95,7 +95,7 @@ class Word2vec:
                 if i != j:
                     context_idx = self.vocab.word2idx[self.vocab.corpus[j]]
                     pairs.append((target_idx, context_idx))
-        return pairs
+        return np.array(pairs, dtype=np.int32)
 
     def _sigmoid(self, x):
         return 1 / (1 + np.exp(-x))
