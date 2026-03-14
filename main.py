@@ -63,25 +63,15 @@ class Word2vec:
         self.alpha = init_alpha
 
     def _generate_training_pairs(self, window_size):
-        """Generates (target, context) pairs from corpus with the window-size specified (stores indices instead of creating one-hot vectors to optimize speed)"""
         pairs = []
         for i in range(len(self.vocab.corpus)):
-            word = self.vocab.corpus[i]
-            target_idx = self.vocab.word2idx[word]
+            target_idx = self.vocab.word2idx[self.vocab.corpus[i]]
             start = max(0, i - window_size)
             end = min(len(self.vocab.corpus), i + window_size + 1)
             for j in range(start, end):
-                if i != j: 
-                    context_word = self.vocab.corpus[j]
-                    context_idx = self.vocab.word2idx[context_word]
-
-                    negatives = []
-                    while len(negatives) < self.num_negatives:
-                        neg = np.random.choice(self.vocab.vocab_size, p=self.vocab.noise_distribution)
-                        if neg != target_idx and neg != context_idx:
-                            negatives.append(neg)
-
-                    pairs.append((target_idx, context_idx, negatives))       
+                if i != j:
+                    context_idx = self.vocab.word2idx[self.vocab.corpus[j]]
+                    pairs.append((target_idx, context_idx))
         return pairs
 
     def _sigmoid(self, x):
@@ -109,7 +99,12 @@ class Word2vec:
         for x in range(0, epochs):
             loss = 0
             for i in range(len(self.pairs)):
-                target_idx, context_idx, negatives = self.pairs[i]
+                target_idx, context_idx = self.pairs[i]
+                negatives = []
+                while len(negatives) < self.num_negatives:
+                    neg = np.random.choice(self.vocab.vocab_size, p=self.vocab.noise_distribution)
+                    if neg != target_idx and neg != context_idx:
+                        negatives.append(neg)
                 self._forward_prop(target_idx, context_idx, negatives)
                 self._back_prop(target_idx, context_idx, negatives)
                 loss += -np.log(self.score_pos + 1e-9)
