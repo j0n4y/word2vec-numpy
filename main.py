@@ -45,7 +45,7 @@ def main():
         model.train(epochs=5)
         model.save("weights.npz")
 
-    print("\nTraining complete!")
+    print("Training complete!")
 
     while True:
         user_word = input("\nEnter a word to find similar ones (or 'q' to quit): ").lower()

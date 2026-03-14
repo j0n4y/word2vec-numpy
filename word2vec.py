@@ -106,7 +106,7 @@ class Word2vec:
                             max_idx = i
                 top_words.append(f"{self.vocab.idx2word[max_idx]}: {max_sim}")
                 prev_max = max_sim
-            print(f"predictions for {word}: {top_words}")
+            print(f"similarities for {word}: {top_words}")
         else:
             print(f'word "{word}" is not in dictionary')
 
