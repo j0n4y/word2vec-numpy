@@ -1,5 +1,21 @@
 import numpy as np
 
+import nltk
+from nltk.corpus import brown
+
+nltk.download('brown') # Execute this line only if brown corpus is not already downloaded
+sentences = brown.sents(categories='news')
+
+def preprocess(sentences):
+    processed = []
+    for sentence in sentences:
+        words = []
+        for word in sentence:
+            if word.isalpha():
+                words.append(word.lower())
+        processed.append(words)
+    return processed
+
 class Vocabulary:
     """Handles vocabulary mapping and corpus indexing"""
     def __init__(self, sentences):
@@ -12,11 +28,9 @@ class Vocabulary:
 
     def _build_vocab(self, sentences):
         count = 0
-        for row in sentences:
-            for word in row.split():
-                word = word.lower()
+        for sentence in sentences:
+            for word in sentence:
                 self.corpus.append(word)
-
                 if self.word2idx.get(word) is None:
                     self.word2idx[word] = count
                     self.idx2word[count] = word
@@ -95,6 +109,6 @@ class Word2vec:
         else:
             print(f'word "{word}" is not in dictionary')
 
-vocab = Vocabulary(sentences)
-word2vec = Word2vec(vocab, 5, 10, 0.5)
-word2vec.train(400)
+vocab = Vocabulary(preprocess(sentences))
+word2vec = Word2vec(vocab, 1, 1, 0.5)
+word2vec.train(1)
