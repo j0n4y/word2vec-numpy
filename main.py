@@ -18,20 +18,21 @@ def preprocess(sentences):
 
 class Vocabulary:
     """Handles vocabulary mapping and corpus indexing"""
-    def __init__(self, sentences):
+    def __init__(self, sentences, min_count=5):
         self.word2idx = {}
         self.idx2word = {}
         self.corpus = []
         self.vocab_size = 0
         self.corpus_size = 0
-        self._build_vocab(sentences)
+        self._build_vocab(sentences, min_count)
 
-    def _build_vocab(self, sentences):
+    def _build_vocab(self, sentences, min_count):
         count = 0
-        freq = {} # count frequency of each word for computing noise distribution and subsampling of frequent words
+        freq = {} # count frequency of each word for removing rare words and computing subsampling of frequent words and noise distribution  
+        full_corpus = []
         for sentence in sentences:
             for word in sentence:
-                self.corpus.append(word)
+                full_corpus.append(word)
                 if self.word2idx.get(word) is None:
                     self.word2idx[word] = count
                     self.idx2word[count] = word
@@ -39,6 +40,16 @@ class Vocabulary:
                 if freq.get(word) is None:
                     freq[word] = 0
                 freq[word] += 1
+
+        # remove rare words
+        for word in full_corpus:
+            if freq[word] < min_count:
+                continue
+            self.corpus.append(word)
+            if self.word2idx.get(word) is None:
+                self.word2idx[word] = count
+                self.idx2word[count] = word
+                count += 1
 
         self.vocab_size = len(self.word2idx)
         self.corpus_size = len(self.corpus)
@@ -161,7 +172,7 @@ class Word2vec:
         else:
             print(f'word "{word}" is not in dictionary')
 
-vocab = Vocabulary(preprocess(sentences))
+vocab = Vocabulary(preprocess(sentences), min_count=5)
 word2vec = Word2vec(vocab, window_size=5, embedding_dimension=50, num_negatives=5, init_alpha=0.025)
 word2vec.train(10)
 
