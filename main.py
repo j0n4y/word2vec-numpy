@@ -101,7 +101,7 @@ class Word2vec:
         return 1 / (1 + np.exp(-x))
 
     def _forward_prop(self, target_idx, context_idx, negatives):
-        self.h = self.W1[target_idx].flatten()
+        self.h = self.W1[target_idx]
         self.score_pos = self._sigmoid(np.dot(self.W2[context_idx], self.h))
         self.score_negs = []
         for neg in negatives:
