@@ -46,7 +46,6 @@ Most of these choices, including the choice of Skip-gram over CBOW, come from th
 
 ## Things to improve
 
-If I had more time, I would implement many things to have a better performance and results:
 - Currently, the training uses a python for loop for doing each forward and back propagation. This is very slow, as in every iteration it is aplying an overhead. The optimal implementation should use batches to take advantage of numpy.
 - The model generates all the possible pairs at the start of the program. This affects scalability because it uses a lot of memory. The pairs should be computed in training time.
 - The corpus used is small, and because the model is slow I did not have time to experiment with training, so the result is not as good as it could be.
